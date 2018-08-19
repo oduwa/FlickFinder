@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -46,7 +47,6 @@ public class ShowActivity extends AppCompatActivity {
     public String showQueryTitle;
     public JSONArray seasonsData;
 
-    public TextView titleTextView;
     public TextView descTextView;
     public ImageView imageView;
     public Button randomButton;
@@ -59,14 +59,17 @@ public class ShowActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         final Context context = this;
+        Typeface tf1 = Typeface.createFromAsset(getAssets(), "fonts/JosefinSans-SemiBoldItalic.ttf");
+        Typeface tf2 = Typeface.createFromAsset(getAssets(), "fonts/Quicksand-Bold.otf");
 
-        titleTextView = (TextView) findViewById(R.id.title_text_view);
         descTextView = (TextView) findViewById(R.id.description_text_view);
+        descTextView.setTypeface(tf1);
         imageView = (ImageView) findViewById(R.id.imageView);
         randomButton = (Button) findViewById(R.id.button);
+        randomButton.setTypeface(tf2);
 
         Intent intent = getIntent();
-        titleTextView.setText(intent.getStringExtra("title"));
+        getSupportActionBar().setTitle(intent.getStringExtra("title"));
         descTextView.setText(intent.getStringExtra("desc"));
         descTextView.setMovementMethod(new ScrollingMovementMethod());
         showTvdbId = intent.getStringExtra("tvdbId");
@@ -120,46 +123,60 @@ public class ShowActivity extends AppCompatActivity {
                         call.enqueue(new Callback<ResponseBody>() {
                             @Override
                             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                                Log.d("RANDOM_EPISODE", response.body().toString());
+                                if(response != null && response.body() != null){
+                                    Log.d("RANDOM_EPISODE", response.body().toString());
+                                    try {
+                                        JSONObject json = new JSONObject(response.body().string());
 
-                                try {
-                                    JSONObject json = new JSONObject(response.body().string());
+                                        // Show episode info
+                                        Typeface tf1 = Typeface.createFromAsset(getAssets(), "fonts/JosefinSans-Bold.ttf");
+                                        Typeface tf2 = Typeface.createFromAsset(getAssets(), "fonts/JosefinSans-SemiBoldItalic.ttf");
 
-                                    // Show episode info
-                                    final Dialog dialog = new Dialog(context);
-                                    dialog.setContentView(R.layout.content_episode_dialog);
-                                    TextView episodeTitleTextView = (TextView) dialog.findViewById(R.id.episode_title_text_view);
-                                    episodeTitleTextView.setText(String.format("S%02dE%02d", s, e));
-                                    TextView episodeDescTextView = (TextView) dialog.findViewById(R.id.episode_desc_text_view);
-                                    episodeDescTextView.setText(json.getString("overview"));
-                                    episodeDescTextView.setMovementMethod(new ScrollingMovementMethod());
-                                    Button okButton = (Button) dialog.findViewById(R.id.ok_button);
-                                    okButton.setOnClickListener(new View.OnClickListener() {
-                                        @Override
-                                        public void onClick(View v) {
-                                            dialog.dismiss();
-                                        }
-                                    });
-                                    dialog.show();
+                                        final Dialog dialog = new Dialog(context);
+                                        dialog.setContentView(R.layout.content_episode_dialog);
+                                        TextView episodeTitleTextView = (TextView) dialog.findViewById(R.id.episode_title_text_view);
+                                        episodeTitleTextView.setTypeface(tf1);
+                                        episodeTitleTextView.setText(String.format("S%02dE%02d", s, e));
+                                        TextView episodeDescTextView = (TextView) dialog.findViewById(R.id.episode_desc_text_view);
+                                        episodeDescTextView.setText(json.getString("overview"));
+                                        episodeDescTextView.setTypeface(tf2);
+                                        episodeDescTextView.setMovementMethod(new ScrollingMovementMethod());
+                                        Button okButton = (Button) dialog.findViewById(R.id.ok_button);
+                                        okButton.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                dialog.dismiss();
+                                            }
+                                        });
+                                        dialog.show();
 
 
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
                                 }
-
+                                else{
+                                    Utility.showAlert(context, "Problem persist.",
+                                            "Sorry Mars, cant find the episodes atm");
+                                }
                             }
 
                             @Override
                             public void onFailure(Call<ResponseBody> call, Throwable t) {
-                                Log.d("RANDOM_EPISODE", "Failed");
+                                Utility.showAlert(context, "Problem persist.",
+                                        "Sorry Mars, cant find the episodes atm");
                             }
                         });
 
                     } catch (JSONException ex) {
                         ex.printStackTrace();
                     }
+                }
+                else{
+                    Utility.showAlert(context, "Problem persist.",
+                            "Sorry Mars, cant find the episodes atm");
                 }
             }
         });
@@ -177,23 +194,28 @@ public class ShowActivity extends AppCompatActivity {
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                Log.d("SEASON_FETCH", response.body().toString());
-
-                try {
-                    JSONArray json = new JSONArray(response.body().string());
-                    seasonsData = json;
-                    Log.d("SEASON_FETCH", json.toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                if(response != null && response.body() != null){
+                    Log.d("SEASON_FETCH", response.body().toString());
+                    try{
+                        JSONArray json = new JSONArray(response.body().string());
+                        seasonsData = json;
+                        Log.d("SEASON_FETCH", json.toString());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-
+                else{
+                    Utility.showAlert(context, "Problem persist.",
+                            "Sorry Mars, cant find the episodes atm");
+                }
             }
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
-                Log.d("SEASON_FETCH", "Failed");
+                Utility.showAlert(context, "Problem persist.",
+                        "Sorry Mars, cant find the episodes atm");
             }
         });
     }
@@ -210,21 +232,45 @@ public class ShowActivity extends AppCompatActivity {
         searchCall.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                Log.d("IMAGE_FETCH", response.body().toString());
+                if(response != null && response.body() != null){
+                    Log.d("IMAGE_FETCH", response.body().toString());
+                    try {
+                        JSONObject json = new JSONObject(response.body().string());
 
-                try {
-                    JSONObject json = new JSONObject(response.body().string());
-                    JSONObject imageJsonObject = (JSONObject)json.getJSONArray("showbackground").get(0);
-                    String url = imageJsonObject.getString("url");
-                    Picasso.with(context).load(url).placeholder(R.mipmap
-                            .ic_launcher).into(imageView);
-                    Log.d("IMAGE_FETCH", json.toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                        // Get a key for image
+                        String imageKey = "tvthumb";
+                        if(!json.has(imageKey)){
+                            if(json.has("tvthumb")){
+                                imageKey = "tvthumb";
+                            }
+                            else if(json.has("clearart")){
+                                imageKey = "clearart";
+                            }
+                            else if(json.has("showbackground")){
+                                imageKey = "showbackground";
+                            }
+                            else if(json.has("hdtvlogo")){
+                                imageKey = "hdtvlogo";
+                            }
+                            else if(json.has("tvlogo")){
+                                imageKey = "tvlogo";
+                            }
+                            else if(json.has("clearlogo")){
+                                imageKey = "clearlogo";
+                            }
+                        }
+                        JSONObject imageJsonObject = (JSONObject)json.getJSONArray(imageKey).get(0);
+                        String url = imageJsonObject.getString("url");
+                        Picasso.with(context).load(url).placeholder(R.mipmap
+                                .mari_square_2).into(imageView);
+                        Log.d("IMAGE_FETCH", json.toString());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                 }
-
             }
 
             @Override

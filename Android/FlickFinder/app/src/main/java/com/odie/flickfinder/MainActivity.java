@@ -2,6 +2,8 @@ package com.odie.flickfinder;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Typeface;
+import android.os.Build;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -34,8 +36,10 @@ import com.odie.flickfinder.Utility.Utility;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -68,8 +72,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
+            // Do something for nougat and above versions
+            Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+            setSupportActionBar(toolbar);
+        } else{
+            // do something for phones running an SDK before Nougat
+            Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+            setSupportActionBar(toolbar);
+            getSupportActionBar().setTitle("");
+        }
+
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
@@ -117,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
         private static final String ARG_SECTION_NUMBER = "section_number";
         public ArrayAdapter<String> listAdapter = null;
         public ListView listView = null;
+        public String[] titles = null;
 
         public FavouriteListFragment() {
         }
@@ -139,12 +153,11 @@ public class MainActivity extends AppCompatActivity {
             final View rootView = inflater.inflate(R.layout.fragment_favourites, container, false);
 
             Object[] objectArray = Utility.getSavedTitles(getContext()).toArray();
-            final String[] titles = Arrays.copyOf(objectArray, objectArray.length, String[].class);
-            Log.d("XXX", ""+titles.length);
+            titles = Arrays.copyOf(objectArray, objectArray.length, String[].class);
             Utility.setStringsToQueryFormat(titles, false);
             listView = (ListView) rootView.findViewById(R.id.favourite_list_view);
             listAdapter =
-                    new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, titles);
+                    new ArrayAdapter<String>(getContext(), R.layout.favourite_list_item, titles);
             listView.setAdapter(listAdapter);
 
             // List item click
@@ -195,7 +208,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
-
             return rootView;
         }
 
@@ -203,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
         public void onResume() {
             // Get list
             Object[] objectArray = Utility.getSavedTitles(getContext()).toArray();
-            final String[] titles = Arrays.copyOf(objectArray, objectArray.length, String[].class);
+            titles = Arrays.copyOf(objectArray, objectArray.length, String[].class);
             Utility.setStringsToQueryFormat(titles, false);
             Log.d("XXX", ""+titles.length);
             listAdapter =
@@ -243,8 +255,10 @@ public class MainActivity extends AppCompatActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+            Typeface tf = Typeface.createFromAsset(getContext().getAssets(), "fonts/JosefinSans-SemiBold.ttf");
 
             final EditText edit_txt = (EditText) rootView.findViewById(R.id.search_edit_text);
+            edit_txt.setTypeface(tf);
             edit_txt.setOnEditorActionListener(new EditText.OnEditorActionListener() {
                 @Override
                 public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
